@@ -6,7 +6,6 @@ import numpy as np
 from halo import Halo
 from sklearn.neighbors import NearestNeighbors
 
-
 """
 This file is part of the computer assignments for the course DD1418/DD2418 Language engineering at KTH.
 Created 2018 by Dmytro Kalpakchi and Johan Boye.
@@ -48,7 +47,8 @@ class RandomIndexing(object):
     ## @param      right_window_size  The right window size. Stored in an
     ##                                instance variable self__rws.
     ##
-    def __init__(self, filenames, dimension=2000, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3, right_window_size=3):
+    def __init__(self, filenames, dimension=2000, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3,
+                 right_window_size=3):
         self.__sources = filenames
         self.__vocab = set()
         self.__dim = dimension
@@ -60,7 +60,6 @@ class RandomIndexing(object):
         self.__rws = right_window_size
         self.__cv = None
         self.__rv = None
-        
 
     ##
     ## @brief      A function cleaning the line from punctuation and digits
@@ -75,8 +74,17 @@ class RandomIndexing(object):
     ##
     def clean_line(self, line):
         # YOUR CODE HERE
-        return []
-
+        targetChars = list(".,0123456789\"\n()/:;'!?-`")
+        wordList = line.split(" ")
+        returnList = []
+        for word in wordList:
+            cleanWord = ""
+            for char in word:
+                if char not in targetChars:
+                    cleanWord = cleanWord + char
+            if cleanWord != "":
+                returnList.append(cleanWord)
+        return returnList
 
     ##
     ## @brief      A generator function providing one cleaned line at a time
@@ -98,7 +106,6 @@ class RandomIndexing(object):
                 for line in f:
                     yield self.clean_line(line)
 
-
     ##
     ## @brief      Build vocabulary of words from the provided text files.
     ##
@@ -113,7 +120,6 @@ class RandomIndexing(object):
         # YOUR CODE HERE
         self.write_vocabulary()
 
-
     ##
     ## @brief      Get the size of the vocabulary
     ##
@@ -122,7 +128,6 @@ class RandomIndexing(object):
     @property
     def vocabulary_size(self):
         return len(self.__vocab)
-
 
     ##
     ## @brief      Creates word embeddings using Random Indexing.
@@ -170,7 +175,6 @@ class RandomIndexing(object):
         # YOUR CODE HERE
         pass
 
-
     ##
     ## @brief      Function returning k nearest neighbors with distances for each word in `words`
     ## 
@@ -201,7 +205,6 @@ class RandomIndexing(object):
         # YOUR CODE HERE
         return [None]
 
-
     ##
     ## @brief      Returns a vector for the word obtained after Random Indexing is finished
     ##
@@ -213,7 +216,6 @@ class RandomIndexing(object):
         # YOUR CODE HERE
         return None
 
-
     ##
     ## @brief      Checks if the vocabulary is written as a text file
     ##
@@ -221,7 +223,6 @@ class RandomIndexing(object):
     ##
     def vocab_exists(self):
         return os.path.exists('vocab.txt')
-
 
     ##
     ## @brief      Reads a vocabulary from a text file having one word per line.
@@ -238,7 +239,6 @@ class RandomIndexing(object):
         self.__i2w = list(self.__vocab)
         return vocab_exists
 
-
     ##
     ## @brief      Writes a vocabulary as a text file containing one word from the vocabulary per row. 
     ##
@@ -246,7 +246,6 @@ class RandomIndexing(object):
         with open('vocab.txt', 'w') as f:
             for w in self.__vocab:
                 f.write('{}\n'.format(w))
-
 
     ##
     ## @brief      Main function call to train word embeddings
@@ -264,20 +263,21 @@ class RandomIndexing(object):
             spinner.start(text="Reading vocabulary...")
             start = time.time()
             self.read_vocabulary()
-            spinner.succeed(text="Read vocabulary in {}s. Size: {} words".format(round(time.time() - start, 2), ri.vocabulary_size))
+            spinner.succeed(
+                text="Read vocabulary in {}s. Size: {} words".format(round(time.time() - start, 2), ri.vocabulary_size))
         else:
             spinner.start(text="Building vocabulary...")
             start = time.time()
             self.build_vocabulary()
-            spinner.succeed(text="Built vocabulary in {}s. Size: {} words".format(round(time.time() - start, 2), ri.vocabulary_size))
-        
+            spinner.succeed(text="Built vocabulary in {}s. Size: {} words".format(round(time.time() - start, 2),
+                                                                                  ri.vocabulary_size))
+
         spinner.start(text="Creating vectors using random indexing...")
         start = time.time()
         self.create_word_vectors()
         spinner.succeed("Created random indexing vectors in {}s.".format(round(time.time() - start, 2)))
 
         spinner.succeed(text="Execution is finished! Please enter words of interest (separated by space):")
-
 
     ##
     ## @brief      Trains word embeddings and enters the interactive loop, where you can 
@@ -299,7 +299,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Random Indexing word embeddings')
     parser.add_argument('-fv', '--force-vocabulary', action='store_true', help='regenerate vocabulary')
     parser.add_argument('-c', '--cleaning', action='store_true', default=False)
-    parser.add_argument('-co', '--cleaned_output', default='cleaned_example.txt', help='Output file name for the cleaned text')
+    parser.add_argument('-co', '--cleaned_output', default='cleaned_example.txt',
+                        help='Output file name for the cleaned text')
     args = parser.parse_args()
 
     if args.force_vocabulary:
