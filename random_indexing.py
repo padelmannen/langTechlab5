@@ -74,8 +74,10 @@ class RandomIndexing(object):
     ## @return     A list of words in a cleaned line
     ##
     def clean_line(self, line):
-        # YOUR CODE HERE
-        return []
+        line = line.translate(str.maketrans('', '', string.punctuation))
+        line = line.translate(str.maketrans('', '', string.digits))
+
+        return line
 
 
     ##
