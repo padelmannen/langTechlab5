@@ -1,5 +1,6 @@
 import os
 import argparse
+import random
 import time
 import string
 import numpy as np
@@ -74,7 +75,7 @@ class RandomIndexing(object):
     ##
     def clean_line(self, line):
         # YOUR CODE HERE
-        targetChars = list(".,0123456789\"\n()/:;'!?-`")
+        targetChars = list(".,0123456789\"\n()/:;'!?-`\x1f")
         wordList = line.split(" ")
         returnList = []
         for word in wordList:
@@ -118,6 +119,9 @@ class RandomIndexing(object):
     ##
     def build_vocabulary(self):
         # YOUR CODE HERE
+        for line in self.text_gen():
+            for word in line:
+                self.__vocab.add(word)
         self.write_vocabulary()
 
     ##
@@ -173,7 +177,32 @@ class RandomIndexing(object):
     ##
     def create_word_vectors(self):
         # YOUR CODE HERE
-        pass
+        self.__rv, self.__cv = dict(), dict()
+        for word in self.__vocab:
+
+            self.__cv[word] = np.zeros(self.__dim)
+            self.__rv[word] = np.zeros(self.__dim)
+            randomPositions = random.sample(range(self.__dim), self.__non_zero)
+
+            for i in range(self.__non_zero):
+                randomValue = self.__non_zero_values[random.randint(0, 1)]
+                self.__rv[word][randomPositions[i]] = randomValue
+
+        for line in self.text_gen():
+            curWordIndex = 0
+            for word in line:
+                curWordIndex += 1
+                try:
+                    for i in range(1, self.__lws):
+                        self.__cv[word] += self.__rv[line[curWordIndex-i]]
+                except IndexError:
+                    break
+
+                try:
+                    for i in range(1, self.__rws):
+                        self.__cv[word] += self.__rv[line[curWordIndex+i]]
+                except IndexError:
+                    break
 
     ##
     ## @brief      Function returning k nearest neighbors with distances for each word in `words`
