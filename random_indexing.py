@@ -2,7 +2,6 @@ import os
 import argparse
 import random
 import time
-import string
 import numpy as np
 from halo import Halo
 from sklearn.neighbors import NearestNeighbors
@@ -48,7 +47,7 @@ class RandomIndexing(object):
     ## @param      right_window_size  The right window size. Stored in an
     ##                                instance variable self__rws.
     ##
-    def __init__(self, filenames, dimension=2000, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3,
+    def __init__(self, filenames, dimension=1000, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3,
                  right_window_size=3):
         self.__sources = filenames
         self.__vocab = set()
@@ -61,7 +60,7 @@ class RandomIndexing(object):
         self.__rws = right_window_size
         self.__cv = None
         self.__rv = None
-        self.__cvList = []
+        self.badChars = ".,0123456789\"\n()/:;'!?-`\x1f"
 
     ##
     ## @brief      A function cleaning the line from punctuation and digits
@@ -75,22 +74,11 @@ class RandomIndexing(object):
     ## @return     A list of words in a cleaned line
     ##
     def clean_line(self, line):
-        # line = line.translate(str.maketrans('', '', string.punctuation)).strip("\n")
-        # line = line.translate(str.maketrans('', '', string.digits)).split(' ')
-        #
-        # return line
 
-        targetChars = list(".,0123456789\"\n()/:;'!?-`\x1f")
-        wordList = line.split(" ")
-        returnList = []
-        for word in wordList:
-            cleanWord = ""
-            for char in word:
-                if char not in targetChars:
-                    cleanWord = cleanWord + char
-            if cleanWord != "":
-                returnList.append(cleanWord)
-        return returnList
+        line = line.translate(str.maketrans('', '', self.badChars)).split(' ')
+        line = list(filter(None, line))  #remove empty strings
+        return line
+
 
     ##
     ## @brief      A generator function providing one cleaned line at a time
@@ -184,10 +172,11 @@ class RandomIndexing(object):
     def create_word_vectors(self):
         self.__cv = {}
         self.__rv = {}
+
         for word in self.__vocab:
             rv = np.zeros(self.__dim)
             cv = np.zeros(self.__dim)
-            randomPositions = random.sample(range(self.__dim), self.__non_zero)
+            randomPositions = random.sample(range(self.__dim), self.__non_zero) #list of random positions
             for pos in randomPositions:
                 rv[pos] = random.choice(self.__non_zero_values)
             self.__rv[word] = rv
@@ -195,23 +184,18 @@ class RandomIndexing(object):
 
         for words in self.text_gen():
 
-
             for i in range(len(words) - 1):
 
-                for j in range(1, self.__lws):
+                for j in range(1, self.__lws):   ##goes to left
                     try:
                         self.__cv[words[i]] += self.__rv[words[i - j]]
                     except IndexError:
                         break
-                for j in range(1, self.__lws):
+                for j in range(1, self.__lws):  #goes to right
                     try:
                         self.__cv[words[i]] += self.__rv[words[i + j]]
                     except IndexError:
                         break
-
-        for word in self.__vocab:
-            self.__cvList.append(self.get_word_vector(word))
-
     ##
     ## @brief      Function returning k nearest neighbors with distances for each word in `words`
     ## 
@@ -239,16 +223,31 @@ class RandomIndexing(object):
     ## @return     A list of list of tuples in the format specified in the function description
     ##
     def find_nearest(self, words, k=5, metric='cosine'):
-        neigh = NearestNeighbors(n_neighbors=k, metric=metric, radius=1.6)
-        neigh.fit(self.__cvList)
+        neigh = NearestNeighbors(n_neighbors=k, metric=metric).fit(list(self.__cv.values()))
         retTup = []
         for word in words:
-            vec = self.get_word_vector(word)
-            ret = neigh.kneighbors(X=vec)
-            print(ret)
-            retTup.append(ret)
+            wordTup = []
+            if word not in self.__vocab:
+                wordTup.append(None)
+            else:
+                wordTup = []
+                vec = self.get_word_vector(word)
+                ret = neigh.kneighbors([vec], n_neighbors=k)
+                # print(ret)
+                # print(type(ret))
+                # for i in range(0,k-1):
+                #     wordindex = ret (1,i)
+                #     word = self.get_word_from_vec(self.__cvList[wordindex])
+                #     wordTup.append([word][ret(i,1)])
+                indices = ret[1][0]
+                distances = ret[0][0]
 
-        # YOUR CODE HERE
+                for i in range(len(indices)):
+                    neighbourWord = list(self.__cv)[indices[i]]
+                    wordTup.append([neighbourWord, "%.1f" % distances[i]])
+
+            retTup.append(wordTup)
+
         return retTup
 
     ##
@@ -263,6 +262,7 @@ class RandomIndexing(object):
         if word in self.__vocab:
             return self.__cv[word]
         return None
+
 
     ##
     ## @brief      Checks if the vocabulary is written as a text file
