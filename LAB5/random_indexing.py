@@ -232,7 +232,28 @@ class RandomIndexing(object):
     ##
     def find_nearest(self, words, k=5, metric='cosine'):
         # YOUR CODE HERE
-        return [None]
+        NN = NearestNeighbors(n_neighbors=k, metric=metric)
+        NN.fit(list(self.__cv.values()))
+
+        allNeighbours = []
+        for word in words:
+            curNeighbours = []
+            if word not in self.__vocab:
+                curNeighbours.append(None)
+            else:
+                wordVector = self.get_word_vector(word)
+                neighbourInfo = NN.kneighbors([wordVector])
+
+                indices = neighbourInfo[1][0]
+                distances = neighbourInfo[0][0]
+
+                for i in range(len(indices)):
+                    neighbourWord = list(self.__cv)[indices[i]]
+                    curNeighbours.append([neighbourWord, "%.1f" % distances[i]])
+
+            allNeighbours.append(curNeighbours)
+
+        return allNeighbours
 
     ##
     ## @brief      Returns a vector for the word obtained after Random Indexing is finished
@@ -243,6 +264,8 @@ class RandomIndexing(object):
     ##
     def get_word_vector(self, word):
         # YOUR CODE HERE
+        if word in self.__vocab:
+            return self.__cv[word]
         return None
 
     ##
