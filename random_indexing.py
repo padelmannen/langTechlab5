@@ -47,7 +47,7 @@ class RandomIndexing(object):
     ## @param      right_window_size  The right window size. Stored in an
     ##                                instance variable self__rws.
     ##
-    def __init__(self, filenames, dimension=1000, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3,
+    def __init__(self, filenames, dimension=500, non_zero=100, non_zero_values=list([-1, 1]), left_window_size=3,
                  right_window_size=3):
         self.__sources = filenames
         self.__vocab = set()
@@ -187,15 +187,18 @@ class RandomIndexing(object):
             for i in range(len(words) - 1):
 
                 for j in range(1, self.__lws):   ##goes to left
-                    try:
+                    if i-j > -1:
                         self.__cv[words[i]] += self.__rv[words[i - j]]
-                    except IndexError:
+                    else:
                         break
-                for j in range(1, self.__lws):  #goes to right
-                    try:
+                for j in range(1, self.__rws):  #goes to right
+                    if i+j < len(words):
                         self.__cv[words[i]] += self.__rv[words[i + j]]
-                    except IndexError:
+                    else:
                         break
+
+
+
     ##
     ## @brief      Function returning k nearest neighbors with distances for each word in `words`
     ## 
@@ -233,12 +236,6 @@ class RandomIndexing(object):
                 wordTup = []
                 vec = self.get_word_vector(word)
                 ret = neigh.kneighbors([vec], n_neighbors=k)
-                # print(ret)
-                # print(type(ret))
-                # for i in range(0,k-1):
-                #     wordindex = ret (1,i)
-                #     word = self.get_word_from_vec(self.__cvList[wordindex])
-                #     wordTup.append([word][ret(i,1)])
                 indices = ret[1][0]
                 distances = ret[0][0]
 
