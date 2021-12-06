@@ -177,9 +177,9 @@ class RandomIndexing(object):
     ##
     def create_word_vectors(self):
         # YOUR CODE HERE
-        self.__rv, self.__cv = dict(), dict()
+        self.__rv = dict()
+        self.__cv = dict()
         for word in self.__vocab:
-
             self.__cv[word] = np.zeros(self.__dim)
             self.__rv[word] = np.zeros(self.__dim)
             randomPositions = random.sample(range(self.__dim), self.__non_zero)
@@ -189,7 +189,7 @@ class RandomIndexing(object):
                 self.__rv[word][randomPositions[i]] = randomValue
 
         for line in self.text_gen():
-            curWordIndex = 0
+            curWordIndex = -1
             for word in line:
                 curWordIndex += 1
                 try:
@@ -203,6 +203,7 @@ class RandomIndexing(object):
                         self.__cv[word] += self.__rv[line[curWordIndex+i]]
                 except IndexError:
                     break
+
 
     ##
     ## @brief      Function returning k nearest neighbors with distances for each word in `words`
@@ -249,7 +250,7 @@ class RandomIndexing(object):
 
                 for i in range(len(indices)):
                     neighbourWord = list(self.__cv)[indices[i]]
-                    curNeighbours.append([neighbourWord, "%.1f" % distances[i]])
+                    curNeighbours.append([neighbourWord, "%.2f" % distances[i]])
 
             allNeighbours.append(curNeighbours)
 
