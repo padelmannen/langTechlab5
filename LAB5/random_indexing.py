@@ -192,17 +192,15 @@ class RandomIndexing(object):
             curWordIndex = -1
             for word in line:
                 curWordIndex += 1
-                try:
-                    for i in range(1, self.__lws):
-                        self.__cv[word] += self.__rv[line[curWordIndex-i]]
-                except IndexError:
-                    break
 
-                try:
-                    for i in range(1, self.__rws):
+                for i in range(1, self.__lws):
+                    if curWordIndex-i >= 0:
+                        self.__cv[word] += self.__rv[line[curWordIndex-i]]
+
+                for i in range(1, self.__rws):
+                    if curWordIndex+i <= len(line)-1:
                         self.__cv[word] += self.__rv[line[curWordIndex+i]]
-                except IndexError:
-                    break
+
 
 
     ##
